@@ -1,5 +1,5 @@
 <script>
-	import PopupTest from "./PopupTest.svelte"
+	import PopoutTest from "./PopoutTest.svelte"
 
 </script>
-<PopupTest />
+<PopoutTest />

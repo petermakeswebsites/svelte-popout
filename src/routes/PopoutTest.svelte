@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Sliders from './Sliders.svelte'
+	import Sliders from './Sliders.svelte.js'
 	import Popout from '$lib/Popout.svelte'
-	import InnerStyleTest from './InnerStyleTest.svelte'
-	import InheritStyleTest from './InheritStyleTest.svelte'
+	import InnerStyleTest from './InnerStyleTest.svelte.js'
+	import InheritStyleTest from './InheritStyleTest.svelte.js'
 		
 	let open = false
 	let text = 'write <b>some</b> html <em>here</em>!'
