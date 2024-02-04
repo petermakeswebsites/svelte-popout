@@ -2,6 +2,7 @@
 	"name": "svelte-popout",
 	"version": "0.0.1",
 	"license": "MIT",
+	"keywords": ["svelte", "popup","window","popout"],
 	"scripts": {
 		"dev": "vite dev --port 1313",
 		"build": "vite build && npm run package",
