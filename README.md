@@ -2,7 +2,9 @@
 
 > :warning: **Warning**: This library is still in development. Expect breaking changes and unstable features. Use at your own risk.
 
-A Svelte component designed to create and manage popout windows, allowing for a seamless integration of detached UI elements into Svelte applications. This library provides a straightforward way to dynamically control popout windows with features such as sizing, positioning, and lifecycle callbacks.
+There is has been a movement taking place over many years of the web moving into the world of full-fledged applications. I suspect that this trend will continue alongside Progressive Web Apps (for example take a look at the new [Window Management API](https://developer.mozilla.org/en-US/docs/Web/API/Window_Management_API/Using)). I think that multi-window applications will become a desirable quite soon.
+
+Svelte Popout is a Svelte component designed to create and manage popout windows, allowing for a seamless integration of detached UI elements into Svelte applications. This library provides a straightforward way to dynamically control popout windows with features such as sizing, positioning, and lifecycle callbacks.
 
 ## Installation
 
@@ -54,12 +56,13 @@ Import `Popout.svelte` in your Svelte component and use it as a wrapper around a
 - `top` (optional): The top position of the popout window relative to the screen.
 - `positionPolling` (optional): Enables polling to update the popout window's position. Defaults to `true`.
 - `positionPollingMs` (optional): Sets the polling interval in milliseconds. Defaults to `100`.
+- `copyStyles` (default `true`): Sets a mutation observer on the top window's head and syncs the stylesheets with the child window. This is necessary for proper component styling.
 - `windowInitialised` (optional): A callback function that is called when the popout window is initialised.
 
 ### Events
 
 - `close`: Dispatched when the popout window is closed.
-- `beforeunload`: Dispatched before the popout window unloads.
+- `beforeunload`: Dispatched before the popout window unloads, good for saving data.
 
 ## Development
 

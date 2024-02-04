@@ -1,5 +1,6 @@
 <script context="module" lang="ts">
-	import { createEventDispatcher } from 'svelte'
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+	import { enableStyleCopying } from './observe-styles.js'
 	// import { BROWSER } from 'esm-env'
 
 	type Features = {
@@ -33,23 +34,37 @@
 		 *
 		 * will supply null instead of window if failed to create window
 		 *
-		 * return a function to be invoked upon destruction of the node
+		 * return a function to be invoked upon destruction of the component
 		 * @param window
 		 */
 		windowInitialised?: (window: Window | null) => void | (() => void)
+		/**
+		 * copy and sync the styles of the topmost window into the child head element
+		 *
+		 * this is necessary for styling to work
+		 *
+		 * @default true
+		 */
+		copyStyles?: boolean
 	}
 
-	export function popout(el: HTMLElement, { features, windowInitialised }: PopoutSettings = {}) {
-		// Generate features string
+	export function popout(
+		el: HTMLElement,
+		{ features, windowInitialised, copyStyles = true }: PopoutSettings = {}
+	) {
+		// generate features string
 		const featureString = Object.entries({ ...(features || {}), popup: 1 })
 			.filter(([_, val]) => val !== undefined)
 			.map(([key, val]) => `${key}=${val}`)
 			.join(',')
 
-		// Create new window context
+		// create new popup window context
 		const popoutWindow = window.open('', '_blank', featureString)
 		const customDestroy = windowInitialised?.(popoutWindow)
-		popoutWindow?.addEventListener('close', (ev) => {})
+
+		// setup style syncing and grab the destroy callback
+		const disableStyleCopying =
+			copyStyles && popoutWindow ? enableStyleCopying(popoutWindow.document.head) : null
 
 		// Handle updates, making sure to change to a modification pattern
 		function update({ features = {} }: PopoutSettings = {}) {
@@ -71,19 +86,18 @@
 
 		function destroy() {
 			customDestroy?.()
+			disableStyleCopying?.()
 			popoutWindow?.close()
 			if (el.parentNode) {
 				el.parentNode.removeChild(el)
 			}
 		}
 
+        // append the element to the popup window  
 		const target = popoutWindow?.document.body
 		if (!target) throw new Error('Window was not found for updating')
 		target.appendChild(el)
 		el.hidden = false
-
-		// Call at the start
-		// update({ features })
 
 		return {
 			update,
@@ -97,6 +111,7 @@
 	export let height: Features['height'] = undefined
 	export let top: Features['top'] = undefined
 	export let left: Features['left'] = undefined
+	export let copyStyles = true
 	export let positionPolling = true
 	export let positionPollingMs = 100
 	export let windowInitialised: PopoutSettings['windowInitialised'] = undefined
@@ -107,8 +122,10 @@
 	}>()
 
 	const onInitialise = (popupWindow: Window | null) => {
-		const destroy = windowInitialised?.(popupWindow)
-		if (!popupWindow) return destroy
+		// if failed to create the window, we'll call the supplied
+		// callback if the user sent one
+		const initialisationCallback = windowInitialised?.(popupWindow)
+		if (!popupWindow) return initialisationCallback
 
 		function updateDimensions() {
 			if (popupWindow) {
@@ -118,40 +135,55 @@
 				top = popupWindow.screenY
 			}
 		}
+
+		// reactivity hook for callback
 		function resize(evt: UIEvent) {
 			updateDimensions()
 		}
 
+		// attaching user-supplied close event
 		function close(evt: Event) {
 			dispatch('close', { evt, popupWindow })
 		}
 
+		// attaching user-supplied beforeunload
 		function beforeunload(evt: BeforeUnloadEvent) {
 			updateDimensions()
 			dispatch('beforeunload', { evt, popupWindow })
 		}
 
+		// if polling is enabled, check every x ms for changes
+		// in position & size
 		function checkPosition() {
 			updateDimensions()
 		}
 
 		const interval = positionPolling ? setInterval(checkPosition, positionPollingMs) : -1
 
+		// append listeners
 		popupWindow.addEventListener('resize', resize)
 		popupWindow.addEventListener('unload', close)
 		popupWindow.addEventListener('beforeunload', beforeunload)
+
+		// destroy listeners - this is called when the use directive gets destroyed,
+		// therefore it's not necessary to tie it to onDestroy(), as the directive
+		// will be destroyed first
 		return () => {
 			popupWindow?.removeEventListener('resize', resize)
 			popupWindow?.removeEventListener('unload', close)
 			popupWindow?.removeEventListener('beforeunload', beforeunload)
 			clearInterval(interval)
-			destroy?.()
+			initialisationCallback?.()
 		}
 	}
 </script>
 
 <div
-	use:popout={{ features: { width, height, top, left }, windowInitialised: onInitialise }}
+	use:popout={{
+		copyStyles,
+		features: { width, height, top, left },
+		windowInitialised: onInitialise
+	}}
 	hidden
 >
 	<slot />
