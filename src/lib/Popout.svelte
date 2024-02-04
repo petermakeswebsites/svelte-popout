@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-	import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+	import { createEventDispatcher } from 'svelte'
 	import { enableStyleCopying } from './observe-styles.js'
 	// import { BROWSER } from 'esm-env'
 
@@ -137,7 +137,7 @@
 		}
 
 		// reactivity hook for callback
-		function resize(evt: UIEvent) {
+		function resize(_: UIEvent) {
 			updateDimensions()
 		}
 
